@@ -1,0 +1,129 @@
+PATH = "/beamlinedata/BMIT/projects/prj37G13104/rec/2023-7-26-ID/XFDing/sc31-2splits-rec-train-prn2i-train-segment/SSSSeg/SSSSeg";
+SAVE = "/beamlinedata/BMIT/projects/prj37G13104/rec/2023-7-26-ID/XFDing/sc31-2splits-rec-train-prn2i-train-segment/Biomedisa/im";
+runsection = 1;
+
+start = 1;
+end = 450;
+number = 5;
+length = 1024;
+width = 1024;
+depth = end;
+
+
+mkDir(SAVE+"XY");
+newImage("Untitled", "8-bit black", length, width, depth);
+rename("im");
+run("Image Sequence... ", "format=TIFF use save="+SAVE+"XY/im0000.tif");
+step = floor(end/number);
+for (i=start; i<=end; i+=step) {
+	closeAll();
+	open(PATH+"/SSSSeg"+leftPad(i,4)+".tif");
+	saveAs("Tiff", SAVE+"XY/im"+leftPad(i,4)+".tif");
+}
+closeAll();
+
+
+if (runsection == 0) {
+mkDir(SAVE+"XZ");
+mkDir(SAVE+"YZ");
+newImage("Untitled", "8-bit black", length, depth, width);
+rename("im");
+run("Image Sequence... ", "format=TIFF use save="+SAVE+"XZ/im0000.tif");
+run("Image Sequence... ", "format=TIFF use save="+SAVE+"YZ/im0000.tif");
+closeAll();
+
+
+run("Image Sequence...", "open="+PATH+"/SSSSeg0000.tif sort");
+run("Reslice [/]...", "output=1.000 start=Top avoid");
+rename("XZ");
+step = floor(length/number);
+for (i=start; i<=length; i+=step) {
+	selectWindow("XZ");
+	run("Duplicate...", "duplicate range="+i+"-"+i);
+	saveAs("Tiff", SAVE+"XZ/im"+leftPad(i,4)+".tif");
+	selectWindow("im"+leftPad(i,4)+".tif");
+	close();
+}
+selectWindow("XZ");
+close();
+run("Reslice [/]...", "output=1.000 start=Left avoid");
+rename("YZ");
+for (i=start; i<=length; i+=step) {
+	selectWindow("YZ");
+	run("Duplicate...", "duplicate range="+i+"-"+i);
+	saveAs("Tiff", SAVE+"YZ/im"+leftPad(i,4)+".tif");
+	selectWindow("im"+leftPad(i,4)+".tif");
+	close();
+}
+closeAll();
+
+
+run("Image Sequence...", "open="+SAVE+"XY/im0000.tif sort");
+run("Divide...", "value=255 stack");
+run("Image Sequence...", "open="+SAVE+"XZ/im0000.tif sort");
+run("Divide...", "value=255 stack");
+run("Reslice [/]...", "output=1.000 start=Top avoid");
+run("Image Sequence...", "open="+SAVE+"YZ/im0000.tif sort");
+run("Divide...", "value=255 stack");
+run("Reslice [/]...", "output=1.000 start=Top avoid");
+run("Rotate 90 Degrees Left");
+run("Flip Vertically", "stack");
+imageCalculator("Add create stack", "imXY","Reslice of imXZ");
+imageCalculator("Add create stack", "Result of imXY","Reslice of imYZ");
+selectWindow("Result of Result of imXY");
+saveAs("Tiff", SAVE+".tif");
+}
+
+closeAll();
+print("Finished");
+
+
+function leftPad(n, width) {
+        s =""+n;
+        while (lengthOf(s)<width)
+                s = "0"+s;
+        return s;
+}
+function rightPad(n, width) {
+        s =""+n;
+        while (lengthOf(s)<width)
+                s = s+"0";
+        return s;
+}
+function decimalPad(f,widthA,widthB) {
+        s = ""+f;
+        pos = 0;
+        for (loop=0; loop<=(lengthOf(s)-1); loop+=1) {
+                if (fromCharCode(charCodeAt(s,loop)) == ".") {
+                        pos = loop;
+                }
+        }
+        if (pos == 0) {
+                outputstr = ""+leftPad(f,widthA)+"-"+leftPad(0,widthB);
+        } else {
+                strA = "";
+                strB = "";
+                for (loopA=0; loopA<=(pos-1); loopA+=1) {
+                        strA = strA+fromCharCode(charCodeAt(s,loopA));
+                }
+                for (loopB=(pos+1); loopB<=(lengthOf(s)-1); loopB+=1) {
+                        strB = strB+fromCharCode(charCodeAt(s,loopB));
+                }
+                outputstr = ""+leftPad(strA,widthA)+"-"+rightPad(strB,widthB);
+        }
+        return outputstr;
+}
+function mkDir(f) {
+        if (File.exists(f) == 1) {
+                print("dir: "+f+" exits");
+        } else {
+                print("creating: "+f);
+                File.makeDirectory(f);
+        }
+}
+function closeAll() {
+        while (nImages()>0) {
+                selectImage(nImages());
+                run("Close");
+        }
+}
