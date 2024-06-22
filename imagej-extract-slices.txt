@@ -1,0 +1,152 @@
+PATH = "/staff/dingx/Desktop/Local_data/dingx/prj35G12338-Hydrogels/rec/Xiaofan/2-EdgeView/230430-samples-sc1-sc4/231023-noise2inverse-sc3-segment/GT/mask";
+SAVE = "/staff/dingx/Desktop/Local_data/dingx/prj35G12338-Hydrogels/rec/Xiaofan/2-EdgeView/230430-samples-sc1-sc4/231023-noise2inverse-sc3-segment/GT/im";
+runsection = 1;
+
+width = 1024;
+length = 1024;
+depth = 394;
+
+xystart = 33;
+xyend = 353;
+xzstart = 201;
+xzend = 802;
+yzstart = 203;
+yzend = 795;
+
+number = 10;
+prefix = "mask";
+
+if (runsection == 1) {
+	if (runsection == 1) {
+		mkDir(SAVE+"XY");
+		newImage("Untitled", "8-bit black", width, length, depth);
+		rename("im");
+		run("Image Sequence... ", "format=TIFF use save="+SAVE+"XY/im0000.tif");
+	}
+	if (number == 1) {
+		i = floor((xyend-xystart)/2);
+		open(PATH+"/"+prefix+leftPad(i,4)+".tif");
+		run("Invert");
+		saveAs("Tiff", SAVE+"XY/im"+leftPad(i,4)+".tif");
+	} else {
+		step = floor((xyend-xystart)/(number-1));
+		for (i=xystart-1; i<=xyend-1; i+=step) {
+			closeAll();
+			open(PATH+"/"+prefix+leftPad(i,4)+".tif");
+			run("Invert");
+			saveAs("Tiff", SAVE+"XY/im"+leftPad(i,4)+".tif");
+		}
+	}
+	if (runsection == 0) {
+		run("Image Sequence...", "open="+SAVE+"XY/im0000.tif sort");
+		run("Divide...", "value=255 stack");
+		saveAs("Tiff", SAVE+"XY"+number+".tif");
+	}
+	closeAll();
+}
+if (runsection == 1) {
+	if (runsection == 1) {
+		mkDir(SAVE+"XZ");
+		newImage("Untitled", "8-bit black", width, depth, length);
+		rename("im");
+		run("Image Sequence... ", "format=TIFF use save="+SAVE+"XZ/im0000.tif");
+		mkDir(SAVE+"YZ");
+		newImage("Untitled", "8-bit black", length, depth, width);
+		rename("im");
+		run("Image Sequence... ", "format=TIFF use save="+SAVE+"YZ/im0000.tif");
+		closeAll();
+	}
+	run("Image Sequence...", "open=["+PATH+"/"+prefix+"0000.tif] sort");
+	run("Reslice [/]...", "output=1.000 start=Top avoid");
+	rename("XZ");
+	step = floor((xzend-xzstart)/number);
+	for (i=xzstart-1; i<=xzend-1; i+=step) {
+		selectWindow("XZ");
+		run("Duplicate...", "duplicate range="+i+"-"+i);
+		run("Invert");
+		saveAs("Tiff", SAVE+"XZ/im"+leftPad(i,4)+".tif");
+		selectWindow("im"+leftPad(i,4)+".tif");
+		close();
+	}
+	selectWindow("XZ");
+	close();
+	run("Reslice [/]...", "output=1.000 start=Left avoid");
+	rename("YZ");
+	step = floor((yzend-yzstart)/number);
+	for (i=yzstart-1; i<=yzend-1; i+=step) {
+		selectWindow("YZ");
+		run("Duplicate...", "duplicate range="+i+"-"+i);
+		run("Invert");
+		saveAs("Tiff", SAVE+"YZ/im"+leftPad(i,4)+".tif");
+		selectWindow("im"+leftPad(i,4)+".tif");
+		close();
+	}
+}
+if (runsection == 1) {
+	run("Image Sequence...", "open="+SAVE+"XY/im0000.tif sort");
+	run("Divide...", "value=255 stack");
+	run("Image Sequence...", "open="+SAVE+"XZ/im0000.tif sort");
+	run("Divide...", "value=255 stack");
+	run("Reslice [/]...", "output=1.000 start=Top avoid");
+	run("Image Sequence...", "open="+SAVE+"YZ/im0000.tif sort");
+	run("Divide...", "value=255 stack");
+	run("Reslice [/]...", "output=1.000 start=Top avoid");
+	run("Rotate 90 Degrees Left");
+	run("Flip Vertically", "stack");
+	imageCalculator("Add create stack", "imXY","Reslice of imXZ");
+	imageCalculator("Add create stack", "Result of imXY","Reslice of imYZ");
+	selectWindow("Result of Result of imXY");
+	saveAs("Tiff", SAVE+"-"+number+".tif");
+}
+closeAll();
+print("Finished");
+
+function leftPad(n, width) {
+        s =""+n;
+        while (lengthOf(s)<width)
+                s = "0"+s;
+        return s;
+}
+function rightPad(n, width) {
+        s =""+n;
+        while (lengthOf(s)<width)
+                s = s+"0";
+        return s;
+}
+function decimalPad(f,widthA,widthB) {
+        s = ""+f;
+        pos = 0;
+        for (loop=0; loop<=(lengthOf(s)-1); loop+=1) {
+                if (fromCharCode(charCodeAt(s,loop)) == ".") {
+                        pos = loop;
+                }
+        }
+        if (pos == 0) {
+                outputstr = ""+leftPad(f,widthA)+"-"+leftPad(0,widthB);
+        } else {
+                strA = "";
+                strB = "";
+                for (loopA=0; loopA<=(pos-1); loopA+=1) {
+                        strA = strA+fromCharCode(charCodeAt(s,loopA));
+                }
+                for (loopB=(pos+1); loopB<=(lengthOf(s)-1); loopB+=1) {
+                        strB = strB+fromCharCode(charCodeAt(s,loopB));
+                }
+                outputstr = ""+leftPad(strA,widthA)+"-"+rightPad(strB,widthB);
+        }
+        return outputstr;
+}
+function mkDir(f) {
+        if (File.exists(f) == 1) {
+                print("dir: "+f+" exits");
+        } else {
+                print("creating: "+f);
+                File.makeDirectory(f);
+        }
+}
+function closeAll() {
+        while (nImages()>0) {
+                selectImage(nImages());
+                run("Close");
+        }
+}

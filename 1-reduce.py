@@ -2,7 +2,7 @@ import os
 import argparse
 import numpy as np
 import shutil
-from XFDing import progressbar2 as progressbar
+from util import progressbar2 as progressbar
 from datetime import datetime
 starttime = datetime.now()
 
@@ -17,19 +17,24 @@ PATH = args.PATH
 SAVE = args.SAVE
 reduceby = args.reduceby
 
-# for i in range(np.size(tomodirsub)):
-if os.path.isdir(PATH):
+# run only if tomo darks and flats folders are present
+if os.path.isdir(PATH+"/tomo")+os.path.isdir(PATH+"/flats")+os.path.isdir(PATH+"/darks") == 3:
+	if not os.path.isdir(SAVE):
+		os.mkdir(SAVE)
 
 	# get number of files inside the desired directory
-	files = sorted([f for f in os.listdir(PATH) if os.path.isfile(os.path.join(PATH,f))])
+	files = sorted([f for f in os.listdir(os.path.join(PATH,"tomo")) if os.path.isfile(os.path.join(PATH,"tomo",f))])
 	filesnum = np.size(files)
 
 	# copy files
 	if not os.path.isdir(SAVE):	
 		os.mkdir(SAVE)
-	for j in progressbar(np.arange(0,filesnum,reduceby),  "Copying projections: "):
+		os.mkdir(os.path.join(SAVE,"tomo"))
+	for j in progressbar(np.arange(0,filesnum,reduceby), "Copying projections: "):
 		# print(files[j])
 		shutil.copy(os.path.join(PATH,files[j]), os.path.join(SAVE,files[j]))
+		os.system("cp -r "+PATH+"/flats "+os.path.join(SAVE,"flats"))
+		os.system("cp -r "+PATH+"/darks "+os.path.join(SAVE,"darks"))
 
 # otherwise notify that raw data is incomplete
 else:

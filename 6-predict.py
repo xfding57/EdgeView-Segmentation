@@ -1,21 +1,21 @@
 import tensorflow as tf
 from tensorflow.keras.layers import Conv2D
 import numpy as np
-import sys, os, time, argparse, shutil, scipy, h5py, glob
+import os, argparse
 from imageio import get_writer
-import XFDing
-from XFDing import progressbar2 as progressbar
+import util
+from util import progressbar2 as progressbar
 run = 1
 present_dir = os.getcwd()
 
 
 # arguments
-parser = argparse.ArgumentParser(description='encode sinogram image.')
+parser = argparse.ArgumentParser(description='')
 parser.add_argument('-PATH', '--PATH', type=str, default='', help='input h5 dataset')
 parser.add_argument('-SAVE', '--SAVE', type=str, default='', help='output folder')
 parser.add_argument('-NN', '--NN', type=str, default='', help='model')
 parser.add_argument('-outputbitrate', type=int, default=32, help='model')
-parser.add_argument('-gpus', type=str, default="1", help='list of visiable GPUs')
+parser.add_argument('-gpus', type=str, default="0", help='list of visiable GPUs')
 parser.add_argument('-depth', type=int, default=3, help='input depth (use for 3D CT image only)')
 args, unparsed = parser.parse_known_args()
 
@@ -35,7 +35,7 @@ NN = tf.keras.models.load_model(args.NN, )
 
 
 # read noisy image to memory
-ns_img_test = XFDing.read_images(args.PATH)
+ns_img_test = util.read_images(args.PATH)
 
 
 # predict

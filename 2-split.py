@@ -3,7 +3,7 @@ import argparse
 import numpy as np
 import shutil
 import sys
-from XFDing import progressbar2 as progressbar
+from util import progressbar2 as progressbar
 from datetime import datetime
 starttime = datetime.now()
 

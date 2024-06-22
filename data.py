@@ -1,10 +1,10 @@
-import numpy as np 
-import h5py, threading
+import numpy as np
 import queue as Queue
-import h5py, glob
-from util import scale2uint8
+import threading
 import util
 import os
+import tifffile
+
 
 class bkgdGen(threading.Thread):
 	def __init__(self, data_generator, max_prefetch=1):
@@ -30,10 +30,11 @@ class bkgdGen(threading.Thread):
 	def __iter__(self):
 		return self
 
-def gen_train_batch_bg(dsfn, mb_size, in_depth, img_size):
+
+def gen_train_batch_bg(PATH, mb_size, in_depth, img_size):
 	# read from folder
-	X = util.read_images(os.path.join(dsfn,"B")).astype(np.float32)
-	Y = util.read_images(os.path.join(dsfn,"A")).astype(np.float32)
+	X = util.read_images(os.path.join(PATH,"B")).astype(np.float32)
+	Y = util.read_images(os.path.join(PATH,"A")).astype(np.float32)
 	while True:
 		idx = np.random.randint(0, X.shape[0]-in_depth, mb_size)
 		if img_size == X.shape[1]:
@@ -48,10 +49,11 @@ def gen_train_batch_bg(dsfn, mb_size, in_depth, img_size):
 		batch_Y = [batch_Y[_i, _r:_r+img_size, _c:_c+img_size, :] for _i, _r, _c in zip(range(mb_size), rst, cst)]
 		yield np.array(batch_X), np.array(batch_Y)
 
-def get1batch4test(dsfn, in_depth):
+
+def get1batch4test(PATH, in_depth):
 	# read from folder
-	X = util.read_images(os.path.join(dsfn,"B-test")).astype(np.float32)
-	Y = util.read_images(os.path.join(dsfn,"A-test")).astype(np.float32)
+	X = util.read_images(os.path.join(PATH,"B-test")).astype(np.float32)
+	Y = util.read_images(os.path.join(PATH,"A-test")).astype(np.float32)
 	# always use slice in_depth//2 for validation
 	idx = (X.shape[0]-in_depth, )
 	batch_X = np.array([np.transpose(X[s_idx : (s_idx+in_depth)], (1, 2, 0)) for s_idx in idx])
@@ -59,4 +61,12 @@ def get1batch4test(dsfn, in_depth):
 	return batch_X.astype(np.float32) , batch_Y.astype(np.float32)
 
 
+def save_model_and_images(epoch, generator, X222, SAVE, args):
+    """ Save the model and images at specified intervals """
+    if epoch == 0 or epoch == (args.epochs - 1) or epoch % args.epochsave == 0:
+        pred_img = generator.predict(X222[:1])
+        # Save image
+        tifffile.imwrite(os.path.join(SAVE, "it" + str(epoch).zfill(5) + ".tif"), pred_img[0, :, :, 0])
+        # Save model
+        generator.save(os.path.join(SAVE, "it" + str(epoch).zfill(5) + ".h5"), include_optimizer=False)
 

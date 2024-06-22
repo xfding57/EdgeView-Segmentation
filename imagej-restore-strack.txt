@@ -1,0 +1,95 @@
+PATH = "/staff/dingx/Desktop/Local_data/dingx/prj35G12338-Hydrogels/rec/Xiaofan/2-Edge-View/230209-samples-sc1-sc3-edgeview/sc2/final.sc2-ffc-rec-32bit.opening3-closing2.tif";
+closeAll();
+runsection = 1;
+
+cropx = 528;
+cropy = 620;
+startz = 0; // always less by 1
+currentwidth = 882;
+currentlength = 854;
+currentdepth = 648;
+originalwidth = 2048;
+originallength = 2048;
+originaldepth = 648;
+rotation = -20;
+
+open(PATH);
+rename("im");
+
+if (runsection == 1) {
+	if (currentwidth != originalwidth) {
+		newImage("left-im", "8-bit black", cropx-1, currentlength, currentdepth);
+		run("Combine...", "stack1=left-im stack2=im");
+		rename("im");
+		newImage("im-right", "8-bit black", originalwidth-(cropx+currentwidth-1), currentlength, currentdepth);
+		run("Combine...", "stack1=im stack2=im-right");
+		rename("im");
+	} if (currentlength != originallength) {
+		newImage("top-im", "8-bit black", originalwidth, cropy-1, currentdepth);
+		run("Combine...", "stack1=top-im stack2=im combine");
+		rename("im");
+		newImage("im-bottom", "8-bit black", originalwidth, originallength-(currentlength+cropy-1), currentdepth);
+		run("Combine...", "stack1=im stack2=im-bottom combine");
+		rename("im");
+	} if (currentdepth != originaldepth) {
+		newImage("above-im", "8-bit black", originalwidth, originallength, startz-1);
+		newImage("im-below", "8-bit black", originalwidth, originallength, originaldepth-(currentdepth+startz-1));
+		run("Concatenate...", "  title=im image1=above-im image2=im image3=im-below");
+		rename("im");
+	}
+	run("Rotate... ", "angle="+(-1)*rotation+" grid=1 interpolation=Bilinear stack");
+	saveAs("Tiff", PATH+"-restore.tif");
+}
+
+closeAll();
+print("Finished");
+
+function leftPad(n, width) {
+        s =""+n;
+        while (lengthOf(s)<width)
+                s = "0"+s;
+        return s;
+}
+function rightPad(n, width) {
+        s =""+n;
+        while (lengthOf(s)<width)
+                s = s+"0";
+        return s;
+}
+function decimalPad(f,widthA,widthB) {
+        s = ""+f;
+        pos = 0;
+        for (loop=0; loop<=(lengthOf(s)-1); loop+=1) {
+                if (fromCharCode(charCodeAt(s,loop)) == ".") {
+                        pos = loop;
+                }
+        }
+        if (pos == 0) {
+                outputstr = ""+leftPad(f,widthA)+"-"+leftPad(0,widthB);
+        } else {
+                strA = "";
+                strB = "";
+                for (loopA=0; loopA<=(pos-1); loopA+=1) {
+                        strA = strA+fromCharCode(charCodeAt(s,loopA));
+                }
+                for (loopB=(pos+1); loopB<=(lengthOf(s)-1); loopB+=1) {
+                        strB = strB+fromCharCode(charCodeAt(s,loopB));
+                }
+                outputstr = ""+leftPad(strA,widthA)+"-"+rightPad(strB,widthB);
+        }
+        return outputstr;
+}
+function mkDir(f) {
+        if (File.exists(f) == 1) {
+                print("dir: "+f+" exits");
+        } else {
+                print("creating: "+f);
+                File.makeDirectory(f);
+        }
+}
+function closeAll() {
+        while (nImages()>0) {
+                selectImage(nImages());
+                run("Close");
+        }
+}
