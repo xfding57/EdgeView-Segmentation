@@ -10,7 +10,11 @@ pip install numpy tensorflow tensorflow_addons keras imageio scipy tifffile matp
 
 Flowchart of procedure:
 
-![Make Subfolders](https://github.com/xfding57/EdgeView-Segmentation/blob/main/media/Figure2.jpg)
+![Methods](https://github.com/xfding57/EdgeView-Segmentation/blob/main/media/Figure2.jpg)
+
+Example of Results:
+
+![Training Loss](https://github.com/xfding57/EdgeView-Segmentation/blob/main/media/sc23-test0037-1.gif)
 
 ## Step A and B
 ### Run 1-split.py:
