@@ -14,7 +14,7 @@ Flowchart of procedure:
 
 Example of Results:
 
-![Training Loss](https://github.com/xfding57/EdgeView-Segmentation/blob/main/media/sc23-test0037-1.gif)
+![Training Loss](https://github.com/xfding57/EdgeView-Segmentation/blob/main/media/sc23-test0037-2.gif)
 
 ## Step A and B
 ### Run 1-split.py:
