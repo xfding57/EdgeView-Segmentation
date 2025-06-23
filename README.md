@@ -1,3 +1,7 @@
+# Deep Learning Phase Contrast Enhancement Strategy
+## Preamble
+This work has been published in [https://doi.org/10.1107/S1600577523000826](https://doi.org/10.1111/jmi.13419).
+
 ## Setup Environemnets:
 
 Create your virtual environment and install dependencies: 
